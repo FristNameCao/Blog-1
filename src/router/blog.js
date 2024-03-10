@@ -12,9 +12,12 @@ const handleBlogRouter = (req, res) => {
 
         const author = req.query.author || ''
         const keyword = req.query.keyword || ''
-        const listData = getList(author, keyword)
-        return new SuccessModel(listData)
-
+        // const listData = getList(author, keyword)
+        // return new SuccessModel(listData)
+        const result = getList(author, keyword)
+        return result.then(listData => {
+            return new SuccessModel(listData)
+        })
     }
 
     // 博客详情
@@ -33,17 +36,17 @@ const handleBlogRouter = (req, res) => {
     // 更新博客
     if (method === 'POST' && req.path === '/api/blog/update') {
         const result = updateBlog(id)
-        console.log('result',result)
-        if(result){
+        console.log('result', result)
+        if (result) {
             return new SuccessModel('更新成功')
         }
-        return  new ErrorModel('更新博客失败')
+        return new ErrorModel('更新博客失败')
     }
 
     // 删除博客
     if (method === 'POST' && req.path === '/api/blog/del') {
         const result = deleteBlog(id)
-        if(result){
+        if (result) {
             return new SuccessModel('删除成功')
         }
         return new ErrorModel('删除博客失败')
