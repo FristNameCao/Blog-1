@@ -10,8 +10,8 @@ con.connect()
 
 
 // 统一执行 sql的函数
- function exec(sql) {
-    return  new Promise((resolve, reject) => {
+function exec(sql) {
+    return new Promise((resolve, reject) => {
         if (con) {
             con.query(sql, (err, result) => {
                 if (err) {
@@ -30,5 +30,6 @@ con.connect()
 // con.end()
 
 module.exports = {
-    exec
+    exec,
+    escpape: mysql.escape
 }

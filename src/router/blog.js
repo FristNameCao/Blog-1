@@ -1,6 +1,17 @@
 const { getList, getDetail, newBlog, updateBlog, deleteBlog } = require('../constructor/blog')
 const { SuccessModel, ErrorModel } = require('../model/resModel')
 
+// 统一得登录验证函数
+const loginCheck = (req) => {
+    if (!req.session?.username) {
+        return new Promise((resolve, reject) => {
+            resolve(new ErrorModel(401, '请先登录'))
+        })
+    }
+}
+
+
+
 const handleBlogRouter = (req, res) => {
     const method = req.method  //请求方法 get post
     const id = req.query.id
@@ -8,11 +19,23 @@ const handleBlogRouter = (req, res) => {
     // console.log('req.body',req.body)
     // console.log('req.path ',req.path )
     // 获取博客列表
+
+
     if (method === 'GET' && req.path === '/api/blog/list') {
-        const author = req.query.author || ''
+        let author = req.query.author || ''
         const keyword = req.query.keyword || ''
         // const listData = getList(author, keyword)
         // return new SuccessModel(listData)
+        if (req.query.isadmin) {
+            // 管理员界面
+            const loginCheckResult = loginCheck(req)
+            if (loginCheckResult) {
+                // 未登录
+                return loginCheckResult
+            }
+            // 强制查询自己的博客
+            author = req.session.username
+        }
         const result = getList(author, keyword)
         return result.then(listData => {
             const list = listData.filter(item => {
@@ -27,6 +50,11 @@ const handleBlogRouter = (req, res) => {
 
     // 博客详情
     if (method === 'GET' && req.path === '/api/blog/detail') {
+        const loginCheckResult = loginCheck(req)
+        if (loginCheckResult instanceof ErrorModel) {
+            // 未登录
+            return loginCheckResult
+        }
         const result = getDetail(id)
         return result.then(data => {
             if (data?.state === 1) {
@@ -47,6 +75,14 @@ const handleBlogRouter = (req, res) => {
         // const data = req.body
         // return new SuccessModel(newBlog(data))
         // req.body.author = 'caozhi呀'
+
+        const loginCheckResult = loginCheck(req)
+        if (loginCheckResult instanceof ErrorModel) {
+            // 未登录
+            return loginCheckResult
+        }
+        req.body.author = req.session.username
+
         const result = newBlog(req.body)
         return result.then(data => {
             return new SuccessModel({ id: data.insertId })
@@ -56,6 +92,12 @@ const handleBlogRouter = (req, res) => {
 
     // 更新博客
     if (method === 'POST' && req.path === '/api/blog/update') {
+        const loginCheckResult = loginCheck(req)
+        if (loginCheckResult instanceof ErrorModel) {
+            // 未登录
+            return loginCheckResult
+        }
+
         const result = updateBlog(id, req.body)
         console.log('result', result)
         return result.then(data => {
@@ -69,6 +111,13 @@ const handleBlogRouter = (req, res) => {
 
     // 删除博客
     if (method === 'POST' && req.path === '/api/blog/del') {
+        const loginCheckResult = loginCheck(req)
+        if (loginCheckResult instanceof ErrorModel) {
+            // 未登录
+            return loginCheckResult
+        }
+
+        req.body.author = req.session.username
         const result = deleteBlog(id, req.body.author)
 
         return result.then(result => {

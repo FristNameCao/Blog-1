@@ -2,6 +2,8 @@ const handleBlogRouter = require('./src/router/blog')
 const handleUserRouter = require('./src/router/user')
 const querystring = require('querystring')
 const { get, set } = require('./src/db/redis')
+const { access } = require('./src/utils/logs')
+
 // 过期时间设置
 const getCookieExpries = () => {
     const d = new Date()
@@ -41,6 +43,10 @@ const getPostData = (req) => {
 
 
 const serverHandle = async (req, res) => {
+
+    // 记录 access log
+    access(`${req.method} -- ${req.url} -- ${req.headers['user-agent']} -- ${Date.now()}`)
+
     // 设置响应头 返回格式JSON
     res.setHeader('Content-type', 'application/json')
 
@@ -114,6 +120,8 @@ const serverHandle = async (req, res) => {
     //     return
     // }
 
+
+
     const blogResult = handleBlogRouter(req, res)
     if (blogResult) {
         blogResult.then(blogData => {
@@ -134,6 +142,7 @@ const serverHandle = async (req, res) => {
     //     res.end(JSON.stringify(userData))
     //     return
     // }
+
     const userResult = handleUserRouter(req, res)
     if (userResult) {
         userResult.then(userData => {
@@ -147,7 +156,6 @@ const serverHandle = async (req, res) => {
         })
         return
     }
-
     // 未命中,404
     res.writeHead(404, { 'Content-Type': 'text/plain' })
     res.write('404 Not Found\n')
